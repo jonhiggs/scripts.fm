@@ -1,0 +1,66 @@
+#!/usr/bin/env ruby1.9
+require 'rubygems'
+require 'glutton_lastfm'
+require 'yaml'
+require 'optparse'
+require 'titleize'
+
+@cfg = YAML.load_file(File.dirname(__FILE__)+"/../etc/settings.yml")
+@api_key = @cfg["lastfm"]["api_key"]
+@secret_key = @cfg["lastfm"]["api_key"]
+@music_dir = @cfg["music_dir"]
+
+### SETUP THE COMMAND LINE OPTIONS ###############################################
+options = {}
+optparse = OptionParser.new do|opts|
+  # Set a banner, displayed at the top
+  # of the help screen.
+  opts.banner = "Usage: #{__FILE__} [options]"
+ 
+  opts.on( '-a', '--artist ARTIST', 'Artist to search for.' ) do |str|
+    options[:artist] = str
+  end
+
+  opts.on( '-b', '--album ALBUM', 'Album to search for.' ) do |str|
+    options[:album] = str
+  end
+
+  opts.on( '-i', '--import INPUT_DIR', 'Directory to import into your music directory.' ) do |file|
+    options[:dir] = File.expand_path file
+  end
+
+  opts.on( '-h', '--help', 'Display this screen' ) do
+    puts opts
+    exit
+  end
+end
+
+optparse.parse!
+
+raise OptionParser::MissingArgument if options[:artist].nil?
+raise OptionParser::MissingArgument if options[:album].nil?
+raise OptionParser::MissingArgument if options[:dir].nil?
+
+#VERBOSE = options[:verbose]
+CONFIG = options[:config] ? options[:config] : File.dirname(__FILE__)+"/config.yml"
+SOURCES = options[:sources] ? options[:sources] : File.dirname(__FILE__)+"/sources.yml"
+
+#############################################################################################
+
+artist = options[:artist]
+album = options[:album]
+src_dir = options[:dir]
+
+album_info = GluttonLastfm.new(@api_key).album_info artist, album
+date = Date.parse(album_info["releasedate"])
+dst_dir = File.join(@music_dir, artist.titleize, "[#{date.year}] #{album.titleize}")
+
+unless File.directory?(src_dir)
+  puts "ERROR: directory `#{src_dir}' does not exists." 
+  exit 1
+end
+
+directories = ["#{File.join(@music_dir, artist.titleize)}", "#{File.join(@music_dir, artist.titleize)}"]
+directories.each do |dir|
+  Dir.mkdir File.join(dir) unless File.directory? dir 
+end
