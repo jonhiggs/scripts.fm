@@ -1,0 +1,36 @@
+#!/usr/bin/ruby
+require 'rubygems'
+require 'glutton_lastfm'
+require 'yaml'
+
+@cfg = YAML.load_file(File.dirname(__FILE__)+"/../etc/settings.yml")
+@api_key = @cfg["lastfm"]["api_key"]
+@secret_key = @cfg["lastfm"]["api_key"]
+
+artist = ARGV[0]
+album = ARGV[1]
+
+album_info = GluttonLastfm.new(@api_key).album_info artist, album
+image_url = album_info["image"].last
+local_file = File.expand_path("./tmp.jpg")
+
+if File.exist?(local_file)
+  puts "SKIPPING: file `#{local_file}' already exists." 
+  exit 0
+end
+
+def download(uri, file)
+  host = URI.parse(uri).host
+  path = URI.parse(uri).path
+  ext = URI.parse
+  require 'net/http'
+  Net::HTTP.start(host) do |http|
+    resp = http.get(path)
+    open(file, "wb") do |file|
+      file.write(resp.body)
+    end
+  end
+  puts "Done."
+end
+
+download image_url, local_file
