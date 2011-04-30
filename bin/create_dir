@@ -41,10 +41,6 @@ raise OptionParser::MissingArgument if options[:artist].nil?
 raise OptionParser::MissingArgument if options[:album].nil?
 raise OptionParser::MissingArgument if options[:dir].nil?
 
-#VERBOSE = options[:verbose]
-CONFIG = options[:config] ? options[:config] : File.dirname(__FILE__)+"/config.yml"
-SOURCES = options[:sources] ? options[:sources] : File.dirname(__FILE__)+"/sources.yml"
-
 #############################################################################################
 
 artist = options[:artist]
