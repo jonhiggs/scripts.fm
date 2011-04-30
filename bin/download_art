@@ -2,27 +2,67 @@
 require 'rubygems'
 require 'glutton_lastfm'
 require 'yaml'
+require 'optparse'
 
 @cfg = YAML.load_file(File.dirname(__FILE__)+"/../etc/settings.yml")
 @api_key = @cfg["lastfm"]["api_key"]
 @secret_key = @cfg["lastfm"]["api_key"]
 
-artist = ARGV[0]
-album = ARGV[1]
+### SETUP THE COMMAND LINE OPTIONS ###############################################
+options = {}
+optparse = OptionParser.new do|opts|
+  # Set a banner, displayed at the top
+  # of the help screen.
+  opts.banner = "Usage: #{__FILE__} [options]"
+ 
+  # Define the options, and what they do
+  options[:file] = "./folder.jpg"
+
+  opts.on( '-a', '--artist ARTIST', 'Artist to search for.' ) do |str|
+    options[:artist] = str
+  end
+
+  opts.on( '-b', '--album ALBUM', 'Album to search for.' ) do |str|
+    options[:album] = str
+  end
+
+  opts.on( '-o', '--output IMG_FILE', 'File to save image to. Defaults to ./folder.jpg' ) do |file|
+    options[:file] = File.expand_path file
+  end
+
+  opts.on( '-h', '--help', 'Display this screen' ) do
+    puts opts
+    exit
+  end
+end
+
+optparse.parse!
+
+raise OptionParser::MissingArgument if options[:artist].nil?
+raise OptionParser::MissingArgument if options[:album].nil?
+
+
+#VERBOSE = options[:verbose]
+CONFIG = options[:config] ? options[:config] : File.dirname(__FILE__)+"/config.yml"
+SOURCES = options[:sources] ? options[:sources] : File.dirname(__FILE__)+"/sources.yml"
+
+#############################################################################################
+
+artist = options[:artist]
+album = options[:album]
+file = options[:file]
 
 album_info = GluttonLastfm.new(@api_key).album_info artist, album
 image_url = album_info["image"].last
-local_file = File.expand_path("./tmp.jpg")
 
-if File.exist?(local_file)
-  puts "SKIPPING: file `#{local_file}' already exists." 
+if File.exist?(file)
+  puts "SKIPPING: file `#{file}' already exists." 
   exit 0
 end
 
 def download(uri, file)
   host = URI.parse(uri).host
   path = URI.parse(uri).path
-  ext = URI.parse
   require 'net/http'
   Net::HTTP.start(host) do |http|
     resp = http.get(path)
@@ -33,4 +73,4 @@ def download(uri, file)
   puts "Done."
 end
 
-download image_url, local_file
+download image_url, file
